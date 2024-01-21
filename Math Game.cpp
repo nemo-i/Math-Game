@@ -1,10 +1,117 @@
 // Math Game.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-
 #include <iostream>
+#include <string>
+using namespace std;
+enum enGameLevel {
+    Easy = 1,
+    Mid = 2,
+    Hard = 3,
+    Mix = 4,
+};
+enum enQuestionType {
+    Add = 1,
+    Sub = 2,
+    Mul =3,
+    Div = 4,
+    Mixed = 5,
+};
 
+string GetQuestionTypeName(enQuestionType questionType) {
+    switch (questionType)
+    {
+    case Add:
+        return "Addition";
+        break;
+    case Sub:
+        return "Subtraction";
+        break;
+    case Mul:
+        return "Multiplication";
+        break;
+    case Div:
+        return "Divition";
+        break;
+    default:
+        return "Mixed";
+        break;
+    }
+}
+
+short ReadOnlyNumber(string msg) {
+    short number;
+    do
+    {
+        cout << msg;
+        cin  >> number;
+    } while (number - number != 0);
+    return number;
+}
+
+bool ReadNumberInRange(short from, short to,short number) {
+   
+  return number >= from && number <= to;
+}
+
+
+
+short ReadQuestionsCount(){
+ return ReadOnlyNumber("How Many Question Do You Want To Answer ? ");
+}
+
+
+
+enGameLevel ReadGameLevel() {
+    short level;
+    do
+    {
+        level = ReadOnlyNumber("Enter Question Level [1]:Easy [2]:Mid [3]:Hard [4]:Mix ? ");
+    } while (!ReadNumberInRange(1,4,level));
+    return (enGameLevel)level;
+}
+
+enQuestionType ReadQuestionType() {
+    short type;
+    do
+    {
+        type = ReadOnlyNumber("Enter Question Type [1]:Add [2]:Sub [3]:Mul [4]:Div [5]:Mix ? ");
+    } while (!ReadNumberInRange(1, 5, type));
+    return (enQuestionType)type;
+}
+
+string GetGameLevelName(enGameLevel gameLevel) {
+    switch (gameLevel)
+    {
+    case Easy:
+        return "Easy";
+        break;
+    case Mid:
+        return "Middle";
+        break;
+    case Hard:
+        return "Hard";
+        break;
+    case Mix:
+        return "Mixed";
+        break;
+    default:
+        return "Easy";
+        break;
+    }
+}
+struct sGameData {
+    short QuestionCount = 0;
+    enGameLevel GameLevel = enGameLevel::Easy;
+    enQuestionType QuestionType = enQuestionType::Add;
+};
+void Start() {
+    ReadQuestionsCount();
+    ReadGameLevel();
+    ReadQuestionType();
+}
 int main()
 {
+    Start();
     std::cout << "Hello World!\n";
 }
 
