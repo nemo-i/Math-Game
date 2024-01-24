@@ -2,6 +2,7 @@
 //
 #include <iostream>
 #include <string>
+#include <cstdio>
 using namespace std;
 enum enGameLevel {
     Easy = 1,
@@ -9,6 +10,28 @@ enum enGameLevel {
     Hard = 3,
     Mix = 4,
 };
+short GetRandNumberInRange(short from, short to) {
+    return rand() % (to - from + 1) + from;
+}
+short RandomNumberBasedOnGameLevel(enGameLevel gameLevel) {
+    switch (gameLevel)
+    {
+    case Easy:
+        return GetRandNumberInRange(1,10);
+        break;
+    case Mid:
+        return GetRandNumberInRange(5, 25);
+        break;
+    case Hard:
+        return GetRandNumberInRange(20, 100);
+        break;
+   
+    default:
+        return GetRandNumberInRange(1, 100);
+        break;
+    }
+}
+
 enum enQuestionType {
     Add = 1,
     Sub = 2,
@@ -16,7 +39,29 @@ enum enQuestionType {
     Div = 4,
     Mixed = 5,
 };
+struct sRoundValues {
+    short numerator = 0;
+    short denominator = 0;
+    char operationType = '+';
+    short userAnswer = 0;
+    short correctAnswer = 0;
+    bool isUserAnswerCorrectly;
+};
+struct sGameData {
+    short QuestionCount = 0;
+    enGameLevel GameLevel = enGameLevel::Easy;
+    enQuestionType QuestionType = enQuestionType::Add;
+    short RightAnswersCount = 0;
+    short WrongAnswersCount = 0;
+    bool IsPlayerPassed = false;
+    struct sRoundValues roundValues;
+};
 
+void CheckUserPassed(sGameData &gameData) {
+    if (gameData.RightAnswersCount > gameData.WrongAnswersCount) {
+        gameData.IsPlayerPassed = true;
+    }
+}
 string GetQuestionTypeName(enQuestionType questionType) {
     switch (questionType)
     {
@@ -94,15 +139,43 @@ string GetGameLevelName(enGameLevel gameLevel) {
         break;
     }
 }
-struct sRoundValues {
-    short numerator = 0;
-    short denominator = 0;
-    char operationType = '+';
-    short userAnswer = 0;
-    short correctAnswer = 0;
-    bool isUserAnswerCorrectly;
-};
 
+
+
+void UserAnsweredCorrectly(sRoundValues &roundValue, sGameData &gameData) {
+    if (roundValue.correctAnswer == roundValue.userAnswer) {
+        roundValue.isUserAnswerCorrectly = true;
+        gameData.RightAnswersCount++;
+    }
+    else
+    {
+        roundValue.isUserAnswerCorrectly = false;
+        gameData.WrongAnswersCount++;
+    }
+}
+void CalculateQuestion(enQuestionType Qtype,sRoundValues &roundValues,sGameData gameData) {
+    short num1 = RandomNumberBasedOnGameLevel(gameData.GameLevel);
+    short num2 = RandomNumberBasedOnGameLevel(gameData.GameLevel);
+
+    roundValues.numerator = num1;
+    roundValues.denominator = num2;
+    switch (Qtype)
+    {
+    case Add:
+        roundValues.correctAnswer = roundValues.numerator + roundValues.denominator;
+        break;
+    case Sub:
+        roundValues.correctAnswer = roundValues.numerator - roundValues.denominator;
+        break;
+    case Mul:
+        roundValues.correctAnswer = roundValues.numerator * roundValues.denominator;
+    case Div:
+        roundValues.correctAnswer = roundValues.numerator / roundValues.denominator;
+    default:
+        CalculateQuestion((enQuestionType)GetRandNumberInRange(1, 4),roundValues,gameData);
+        break;
+    }
+}
 
 string PassOrFail(sGameData gameData) {
     if (gameData.IsPlayerPassed) {
@@ -135,21 +208,14 @@ void PrintRoundQuestionHeader(short questionNumber,short totalQuestions ) {
     cout << "Question [" << questionNumber << "/" << totalQuestions << "]" << endl;
 }
 
-struct sGameData {
-    short QuestionCount = 0;
-    enGameLevel GameLevel = enGameLevel::Easy;
-    enQuestionType QuestionType = enQuestionType::Add;
-    short RightAnswersCount = 0;
-    short WrongAnswersCount = 0;
-    bool IsPlayerPassed = true;
-    struct sRoundValues& roundValues;
-};
+
 
 short ReadUserAnswer() {
     short userAnswer;
     cin >> userAnswer;
     return userAnswer;
 }
+
 char OperationType(enQuestionType questionType) {
     switch (questionType)
     {
@@ -165,23 +231,26 @@ char OperationType(enQuestionType questionType) {
     case Div:
         return '/';
         break;
+
+    case Mixed:
+        enQuestionType Qtype = (enQuestionType)GetRandNumberInRange(1,4);
+        return OperationType(Qtype);
+        break;
     }
 };
 
-short GetRandNumberInRange(short from, short to) {
-    return rand() % (to - from + 1) + from;
-}
 
-void PrintQuestionExpresion(sGameData gameData) {
-    cout << gameData.roundValues.numerator << endl;
-    cout << gameData.roundValues.denominator << " " << OperationType(gameData.QuestionType) << endl;
+
+void PrintQuestionExpresion(sRoundValues roundValues,sGameData gameData) {
+    cout << roundValues.numerator << endl;
+    cout << roundValues.denominator << " " << OperationType(gameData.QuestionType) << endl;
     cout << "---------------" << endl;
 }
 
 
 
 void PrintRightAnswer(sRoundValues roundValues) {
-    cout << "The Answer Is : " << roundValues.correctAnswer<<endl;
+    cout << "The Right Answer Is : " << roundValues.correctAnswer<<endl;
 }
 
 void VerticalSpacing(short number) {
@@ -198,7 +267,7 @@ void BackgroundColor(bool isCorrectlyAnswerThisQuestion) {
         system("color 2F");
         break;
     default:
-        system("color 0F");
+        system("color 4F");
         break;
     }
 }
@@ -242,17 +311,21 @@ void ReadGameData(sGameData &gameData) {
 
 
 
-void PlayGameRounds(sGameData gameData) {
+void PlayGameRounds(sGameData &gameData) {
     sRoundValues roundValue;
 
     for (short Question = 1; Question <= gameData.QuestionCount; Question++)
     {
         PrintRoundQuestionHeader(Question, gameData.QuestionCount);
         VerticalSpacing(1);
-        PrintQuestionExpresion(gameData);
-        ReadUserAnswer();
+        CalculateQuestion(gameData.QuestionType,roundValue,gameData);
+        PrintQuestionExpresion(roundValue,gameData);
+        roundValue.userAnswer =   ReadUserAnswer();
+        UserAnsweredCorrectly(roundValue,gameData);
         PrintRoundResults(roundValue);
+       
     }
+    CheckUserPassed(gameData);
 }
 void PrintFinalResultHeader(string passedOrFail, string face) {
     cout << "-------------------------------------" << endl;
@@ -299,8 +372,11 @@ void GameLoop() {
     } while (again =='Y'||again == 'y');
 
 }
-
+void Reset() {
+    system("color 0F"); 
+}
 void Start() {
+    Reset();
     ReadQuestionsCount();
     ReadGameLevel();
     ReadQuestionType();
@@ -308,6 +384,7 @@ void Start() {
 }
 int main()
 {
+    srand((unsigned)time(NULL));
     GameLoop();
 }
 
